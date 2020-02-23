@@ -18,9 +18,10 @@ def captureVideo(fname):
 def contourDetection(img):
     im = cv2.imread(img)
     imgray = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
+    imgray = cv2.GaussianBlur(imgray,(3,3),cv2.BORDER_DEFAULT)
     m = np.mean(imgray)+110
     ret, thresh = cv2.threshold(imgray, m, 255, 0)
-    _,contours,hierarchy = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    contours,hierarchy = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     '''
     dst = cv2.drawContours(im, contours, -1, (0,255,0), 3)
     cv2.imshow('contour',dst)
@@ -39,7 +40,7 @@ def getCorners(cntr):
 def main():
     
     #filename = 'Video_dataset/Tag0.mp4'
-    vname = 'VideoFrames/vid44.jpg'
+    vname = 'VideoFrames/vid150.jpg'
     #captureVideo(filename)
     img = cv2.imread(vname)
     ctr = contourDetection(vname)
@@ -48,7 +49,7 @@ def main():
 
     crnr = getCorners(ctr)
     print(len(crnr))
-    crnr = np.array(crnr[1])
+    crnr = np.array(crnr[len(crnr)-2])
     #crnr = np.reshape(crnr,(crnr.shape[0],crnr.shape[2]))
     #cornerDetectCustom(vname)
        
