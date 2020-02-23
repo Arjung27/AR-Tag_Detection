@@ -91,11 +91,20 @@ def orient_img(img):
 def find_id(img):
     sizex = img.shape[0]
     sizey = img.shape[1]
-    keypts = np.array([[3.5*sizex/8, -3.5*sizey/8], [4.5*sizex/8, -3.5*sizey/8], [4.5*sizex/8, -4.5*sizey/8], [3.5*sizex/8, -4.5*sizey/8]]) # key points in the 5x5 grid to check for orientation     
+    inds = np.where(img >= 252)
+    xmin = np.min(inds[0])
+    xmax = np.max(inds[0])
+    ymin = np.min(inds[1])
+    ymax = np.max(inds[1])
+    topLeft = [xmin, ymin]
+    topRight = [xmin, ymax]
+    bottomLeft = [xmax, ymin]
+    bottomRight = [xmax, ymax]
+    keypts = np.array([np.add(topLeft,0.375*np.add(bottomRight,np.multiply(-1,topLeft))),np.add(topRight,0.375*np.add(bottomLeft,np.multiply(-1,topRight))),
+                     np.add(bottomLeft, 0.375*np.add(topRight, np.multiply(-1,bottomLeft))), np.add(bottomRight, 0.375*np.add(topLeft, np.multiply(-1,bottomRight)))])
     id = 0
     for i in range(len(keypts)):
         if(img[int(keypts[i][0])][int(keypts[i][1])] > 240):
-            print ("here")
             id = (id << 1) | int('00000001', 2)
         else:
             id = (id << 1) | int('00000000', 2)
