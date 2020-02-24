@@ -1,30 +1,20 @@
 import cv2 as cv2
 import numpy as np
 from scipy.spatial import Delaunay
+import matplotlib.pyplot as plt
 
-def rectify(img, corners):
-    img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+def rectify(img_gray, corners):
+
     desired_corners = np.array([[0,0],[128, 0], [128, 128] ,[0, 128]], dtype=np.float32)
     H = find_svd(corners, desired_corners)
     hull = Delaunay(corners) ## creates a delaunay diagram from the corners of artag. Required to find points inside the ar tag
-    rect_img = np.zeros((17, 17))
-    print(img_gray.shape)
-    rect_img = cv2.warpPerspective(img_gray, H, (128, 128))
-    # H = np.linalg.inv(H)
-    # for i in range(img.shape[0]):
-    #     for j in range(img.shape[1]):
-    #         if (in_hull([i,j], hull)):
-    #             x,y,_ = (np.matmul(H,np.array([i,j,1]).T)).T
-    #             x,y = int(x), int(y)
-    #             print(str(x) + ","+  str(y))
-    #             rect_img[x, y] = img_gray[i, j]
+    shape = [128, 128]
+    rect_img = getPerspectiveTransform(img_gray,H, shape)
 
     return rect_img
 
 def find_svd(c1,c2):
-    # c1 : artag corners
-    # c2 : desired corners
-    print(c1, c2)
+    
     [x1,y1],[x2,y2],[x3,y3],[x4,y4] = c2
     [xp1, yp1], [xp2, yp2], [xp3, yp3], [xp4, yp4] = c1
     A = np.array([[-x1,-y1,-1,0,0,0,x1*xp1,y1*xp1,xp1],[0,0,0,-x1,-y1,-1,x1*yp1,y1*yp1,yp1],[-x2,-y2,-1,0,0,0,x2*xp2,y2*xp2,xp2],\
@@ -32,7 +22,6 @@ def find_svd(c1,c2):
                 [-x4,-y4,-1,0,0,0,x4*xp4,y4*xp4,xp4],[0,0,0,-x4,-y4,-1,x4*yp4,y4*yp4,yp4]], dtype=np.float32)
                     
     A_trans = A.transpose()
-
     A_prod = np.dot(A_trans,A)
     # print(type(a))
     w,v = np.linalg.eig(A_prod)
@@ -41,33 +30,42 @@ def find_svd(c1,c2):
     H = H/H[2,2]
     H = np.linalg.inv(H)
     H = H/H[2,2]
-    print(H)
     H_ = cv2.getPerspectiveTransform(np.asarray(c1).astype(np.float32), c2.astype(np.float32))
-    print(H_)
-    # exit(-1)
     return H
 
+def getPerspectiveTransform(img, H, shape):
+    Hinv = np.linalg.inv(H)
+    Hinv = Hinv/Hinv[2,2]
+    rect_img = np.zeros((shape[0], shape[1], 1))
+    img_ = img.astype(np.float32)
+
+    for i in range(shape[0]): # x? to change
+        for j in range(shape[1]): #y?
+            [x, y, z] = np.dot(Hinv, np.transpose([j, i, 1]))
+            x = x/z
+            y = y/z
+            
+            if (x < 1920 and y < 1080 and x >= 0 and y >= 0):
+                rect_img[i,j, 0] = (img_[int(np.floor(y)),int(np.floor(x))] + img_[int(np.floor(y)),int(np.ceil(x))]
+                                    + img_[int(np.ceil(y)), int(np.ceil(x))] + img_[int(np.ceil(y)) , int(np.floor(x))])/4.0
+            
+    return rect_img
 
 def orient_img(img):
-    sizex = img.shape[0] # pixel dimensions in x
-    sizey = img.shape[1] # pixel dimensions in y
-    keypts = np.array([[(2.5*sizex)/8, (2.5*sizey)/8], [(5.5*sizex)/8, (2.5*sizey)/8], [(5.5*sizex)/8, (5.5*sizey)/8], [(2.5*sizex)/8, (5.5*sizey)/8]]) # key points in the 5x5 grid to check for orientation
-    # for i in range(len(keypts)):
-    #     if(img[int(keypts[i][0])][int(keypts[i][1])] > 220 and img[int(keypts[i][0])+5][int(keypts[i][1])+5] > 220 and img[int(keypts[i][0])-5][int(keypts[i][1])-5] > 220): # check if particular grid point is white
-    #         key_pt = i                              # store that particular keypoint index
-    #         print (i)
-    #         break
-    print(img[0,0])
-    inds = np.where(img >= 252)
-    xmin = np.min(inds[0])
-    xmax = np.max(inds[0])
-    ymin = np.min(inds[1])
-    ymax = np.max(inds[1])
+    scale = 5
+    scaleEnd = -3
+    img_ = np.asarray(img[scale:scaleEnd, scale:scaleEnd]).astype(np.int32)
+    inds = np.where(img_>= np.max(img_) - 15)
+    xmin = np.min(inds[0])+scale
+    xmax = np.max(inds[0])+scale
+    ymin = np.min(inds[1])+scale
+    ymax = np.max(inds[1])+scale
     topLeft = [xmin, ymin]
     topRight = [xmin, ymax]
     bottomLeft = [xmax, ymin]
     bottomRight = [xmax, ymax]
-    keypts = np.array([topLeft, topRight, bottomLeft, bottomRight])
+    keypts = np.array([np.add(topLeft,0.125*np.add(bottomRight,np.multiply(-1,topLeft))),np.add(topRight,0.125*np.add(bottomLeft,np.multiply(-1,topRight))),
+                     np.add(bottomLeft, 0.125*np.add(topRight, np.multiply(-1,bottomLeft))), np.add(bottomRight, 0.125*np.add(topLeft, np.multiply(-1,bottomRight)))])
     if (img[topLeft[0]+8, topLeft[1]+8] >= 252):
         img = cv2.rotate(img, cv2.ROTATE_90_COUNTERCLOCKWISE)
         img = cv2.rotate(img, cv2.ROTATE_90_COUNTERCLOCKWISE)
@@ -76,35 +74,30 @@ def orient_img(img):
     elif (img[bottomLeft[0]-8, bottomLeft[1]+8] >= 252):
         img = cv2.rotate(img, cv2.ROTATE_90_COUNTERCLOCKWISE)
 
-    # num_rot = {                                     # num of clockwise rotation based on which index is white in color. 
-    #     0 : 2,
-    #     1 : 1,
-    #     2 : 0,
-    #     3 : 3
-    # }
-    # for i in range(num_rot.get(key_pt)): 
-    #     img = cv2.rotate(img, cv2.ROTATE_90_COUNTERCLOCKWISE)
-
     return img  
     
 
 def find_id(img):
     sizex = img.shape[0]
     sizey = img.shape[1]
-    inds = np.where(img >= 252)
-    xmin = np.min(inds[0])
-    xmax = np.max(inds[0])
-    ymin = np.min(inds[1])
-    ymax = np.max(inds[1])
+    scale = 5
+    scaleEnd = -3
+    img_ = np.asarray(img[scale:scaleEnd, scale:scaleEnd]).astype(np.int32)
+    inds = np.where(img_>= np.max(img_) - 15)
+    xmin = np.min(inds[0])+scale
+    xmax = np.max(inds[0])+scale
+    ymin = np.min(inds[1])+scale
+    ymax = np.max(inds[1])+scale
     topLeft = [xmin, ymin]
     topRight = [xmin, ymax]
     bottomLeft = [xmax, ymin]
     bottomRight = [xmax, ymax]
-    keypts = np.array([np.add(topLeft,0.375*np.add(bottomRight,np.multiply(-1,topLeft))),np.add(topRight,0.375*np.add(bottomLeft,np.multiply(-1,topRight))),
-                     np.add(bottomLeft, 0.375*np.add(topRight, np.multiply(-1,bottomLeft))), np.add(bottomRight, 0.375*np.add(topLeft, np.multiply(-1,bottomRight)))])
+    keypts = np.array([np.add(topLeft,0.45*np.add(bottomRight,np.multiply(-1,topLeft))),np.add(topRight,0.45*np.add(bottomLeft,np.multiply(-1,topRight))),
+                     np.add(bottomLeft, 0.45*np.add(topRight, np.multiply(-1,bottomLeft))), np.add(bottomRight, 0.45*np.add(topLeft, np.multiply(-1,bottomRight)))])
     id = 0
+    cv2.rectangle(img,(ymin,xmin),(ymax,xmax),(0,255,0),thickness=1)
     for i in range(len(keypts)):
-        if(img[int(keypts[i][0])][int(keypts[i][1])] > 240):
+        if(img[int(keypts[i][0])][int(keypts[i][1])] > 230):
             id = (id << 1) | int('00000001', 2)
         else:
             id = (id << 1) | int('00000000', 2)
