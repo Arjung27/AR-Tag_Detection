@@ -34,13 +34,14 @@ def getCorners(cntr):
     for cnt in cntr:
         cnt = cv2.approxPolyDP(cnt,0.01*cv2.arcLength(cnt,True),True)
         hull = cv2.convexHull(cnt)
-        hullist.append(hull)
+	if cv2.contourArea(hull)>800:
+        	hullist.append(hull)
     return hullist
 
 def main():
     
     #filename = 'Video_dataset/Tag0.mp4'
-    vname = 'VideoFrames/vid150.jpg'
+    vname = 'VideoFrames/vid500.jpg'
     #captureVideo(filename)
     img = cv2.imread(vname)
     ctr = contourDetection(vname)
@@ -49,7 +50,8 @@ def main():
 
     crnr = getCorners(ctr)
     print(len(crnr))
-    crnr = np.array(crnr[len(crnr)-2])
+    #crnr = np.array(crnr[len(crnr)-2])
+    crnr = np.array(crnr[1])
     #crnr = np.reshape(crnr,(crnr.shape[0],crnr.shape[2]))
     #cornerDetectCustom(vname)
        

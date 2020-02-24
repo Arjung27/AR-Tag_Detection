@@ -29,7 +29,6 @@ def contourDetection(img):
     m = np.mean(imgray)+110
     ret, thresh = cv2.threshold(imgray, m, 255, 0)
     _,contours,hierarchy = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-    hierarchy=hierarchy[0]
     '''
     dst = cv2.drawContours(im, contours, -1, (0,255,0), 3)
     cv2.imshow('contour',dst)
