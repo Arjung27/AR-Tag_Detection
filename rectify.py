@@ -5,13 +5,22 @@ import matplotlib.pyplot as plt
 
 def rectify(img_gray, corners):
 
+
     desired_corners = np.array([[0,0],[128, 0], [128, 128] ,[0, 128]], dtype=np.float32)
     H = find_svd(corners, desired_corners)
-    hull = Delaunay(corners) ## creates a delaunay diagram from the corners of artag. Required to find points inside the ar tag
     shape = [128, 128]
     rect_img = getPerspectiveTransform(img_gray,H, shape)
-
+    
     return rect_img
+
+def warp_lena(img, img_lena, corners):
+    desired_corners = np.array([[0,0],[img_lena.shape[0], 0], [img_lena.shape[0], img_lena.shape[0]] ,[0, img_lena.shape[0]]], dtype=np.float32)
+    #print(corners)
+    H = find_svd(corners, desired_corners)
+    shape = [img_lena.shape[0],img_lena.shape[0]]
+    warped_img = getPerspectiveTransform_Lena(img,img_lena, H, shape)
+
+    return warped_img
 
 def find_svd(c1,c2):
     
@@ -43,17 +52,60 @@ def getPerspectiveTransform(img, H, shape):
         for j in range(shape[1]): #y?
             [x, y, z] = np.dot(Hinv, np.transpose([j, i, 1]))
             x = x/z
-            y = y/z
-            
+            y = y/z       
             if (x < 1920 and y < 1080 and x >= 0 and y >= 0):
-                rect_img[i,j, 0] = (img_[int(np.floor(y)),int(np.floor(x))] + img_[int(np.floor(y)),int(np.ceil(x))]
-                                    + img_[int(np.ceil(y)), int(np.ceil(x))] + img_[int(np.ceil(y)) , int(np.floor(x))])/4.0
+                rect_img[i,j] = (img_[int(np.floor(y)),int(np.floor(x))] + img_[int(np.floor(y)),int(np.ceil(x))]
+                                    + img_[int(np.ceil(y)), int(np.ceil(x))]+ img_[int(np.ceil(y)) , int(np.floor(x))])/4.0
             
     return rect_img
 
+def getPerspectiveTransform_Lena(img, img_lena, H, shape):
+    Hinv = np.linalg.inv(H)
+    Hinv = Hinv/Hinv[2,2]
+    img_ = np.zeros((img.shape[0], img.shape[1], 4))
+    img_[:,:,0:3] = img
+    
+    for i in range(shape[0]): # x? to change
+        for j in range(shape[1]): #y?
+            [x, y, z] = np.dot(Hinv, np.transpose([j, i, 1]))
+            x = x/z
+            y = y/z
+            #print(x, y)
+            index_x = [int(np.floor(y)), int(np.floor(y)), int(np.ceil(y)), int(np.ceil(y))]
+            index_y = [int(np.floor(x)), int(np.floor(x)), int(np.ceil(x)), int(np.ceil(x))]
+            if(x < 1920 and y < 1080 and x>=0 and y>=0):
+                img_[int(np.floor(y)), int(np.floor(x)), 0:3] = (img_[int(np.floor(y)), int(np.floor(x)), 0:3]*img_[int(np.floor(y)), int(np.floor(x)), 3] 
+                                                                    + img_lena[i,j,0:3])/(img_[int(np.floor(y)), int(np.floor(x)), 3] + 1)
+                img_[int(np.floor(y)), int(np.floor(x)), 3] += 1
+                # #print(img_[int(np.floor(y)), int(np.floor(x)), 0:3]) 
+
+                # img_[int(np.floor(y)), int(np.ceil(x)), 0:3] = (img_[int(np.floor(y)), int(np.ceil(x)), 0:3]*img_[int(np.floor(y)), int(np.ceil(x)), 3] 
+                #                                                     + img_lena[i,j,0:3])/(img_[int(np.floor(y)), int(np.ceil(x)), 3] + 1)
+                # img_[int(np.floor(y)), int(np.ceil(x)), 3] += 1
+                # #print(img_[int(np.floor(y)), int(np.ceil(x)), 0:3])
+
+                # img_[int(np.ceil(y)), int(np.ceil(x)), 0:3] = (img_[int(np.ceil(y)), int(np.ceil(x)), 0:3]*img_[int(np.ceil(y)), int(np.ceil(x)), 3] 
+                #                                                     + img_lena[i,j,0:3])/(img_[int(np.ceil(y)), int(np.ceil(x)), 3] + 1)
+                # img_[int(np.ceil(y)), int(np.ceil(x)), 3] += 1 
+                # #print(img_[int(np.ceil(y)), int(np.ceil(x)), 0:3])
+
+                # img_[int(np.ceil(y)), int(np.floor(x)), 0:3] = (img_[int(np.ceil(y)), int(np.floor(x)), 0:3]*img_[int(np.ceil(y)), int(np.floor(x)), 3] 
+                #                                                     + img_lena[i,j,0:3])/(img_[int(np.ceil(y)), int(np.floor(x)), 3] + 1)
+                # img_[int(np.ceil(y)), int(np.floor(x)), 3] += 1
+                #print(img_[int(np.ceil(y)), int(np.floor(x)), 0:3])
+                # img_[index_x, index_y, 0:3] = (img_[index_x, index_y, 0:3]*img_[index_x, index_y,3] + img_lena[i,j,0:3])/(img_[index_x, index_y,3] + 1)
+                # img_[index_x, index_y, 3] += 1
+
+    
+    # inds = np.where(img_[:,:,3]==0)
+    # img_[inds[0], inds[1], 3] = 1
+    #img_ = img_[:,:,0:3]/img_[:,:,3, np.newaxis] 
+    return img_[:,:,0:3].astype(np.uint8)                                                                              
+        
 def orient_img(img):
     scale = 5
     scaleEnd = -3
+    num_rot = 0
     img_ = np.asarray(img[scale:scaleEnd, scale:scaleEnd]).astype(np.int32)
     inds = np.where(img_>= np.max(img_) - 15)
     xmin = np.min(inds[0])+scale
@@ -67,14 +119,17 @@ def orient_img(img):
     keypts = np.array([np.add(topLeft,0.125*np.add(bottomRight,np.multiply(-1,topLeft))),np.add(topRight,0.125*np.add(bottomLeft,np.multiply(-1,topRight))),
                      np.add(bottomLeft, 0.125*np.add(topRight, np.multiply(-1,bottomLeft))), np.add(bottomRight, 0.125*np.add(topLeft, np.multiply(-1,bottomRight)))])
     if (img[topLeft[0]+8, topLeft[1]+8] >= 252):
+        num_rot = 2
         img = cv2.rotate(img, cv2.ROTATE_90_COUNTERCLOCKWISE)
         img = cv2.rotate(img, cv2.ROTATE_90_COUNTERCLOCKWISE)
     elif (img[topRight[0]+8, topRight[1]-8] >= 252):
+        num_rot = 3
         img = cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE)
     elif (img[bottomLeft[0]-8, bottomLeft[1]+8] >= 252):
+        num_rot = 1
         img = cv2.rotate(img, cv2.ROTATE_90_COUNTERCLOCKWISE)
 
-    return img  
+    return num_rot, img  
     
 
 def find_id(img):

@@ -20,7 +20,7 @@ if __name__=="__main__":
         if crnr.shape[0] < 4:
             continue
         rect_img = rectify(img,crnr[0:4])
-        rect_img = orient_img(rect_img)
+        num_rot, rect_img = orient_img(rect_img)
         id = find_id(rect_img)
         rect_img = rect_img.astype(np.uint8)
         print(id)
