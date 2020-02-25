@@ -19,11 +19,38 @@ def warp_lena(img, img_lena, corners):
     H = find_svd(corners, desired_corners)
     shape = [img_lena.shape[0],img_lena.shape[0]]
     warped_img = getPerspectiveTransform_Lena(img,img_lena, H, shape)
-
     return warped_img
 
+def find_cube_pts(img, reqdPts, corners, shape, calib):
+    desired_corners = np.array([[0, 0],[0, shape[1]],[shape[0], shape[1]], [shape[0], 0]])
+    H = find_svd(corners, desired_corners)
+    # print(H)
+    H = np.linalg.inv(H)
+    H = H/H[2,2]
+    E = np.zeros([3, 4])
+    calib_inv = np.linalg.inv(calib)
+    E_ = np.matmul(calib_inv, H)
+    lamda = (np.linalg.norm(np.matmul(calib_inv, H[:, 0])) + np.linalg.norm(np.matmul(calib_inv, H[:, 1])))/2
+    B = np.linalg.det(E_)
+    if B < 0:
+        E_ = -E_
+        
+    E_ = E_/lamda
+    E[:,0] = (E_[:,0]/lamda).T
+    E[:,1] = (E_[:,1]/lamda).T
+    E[:,2] = (np.cross(E[:,0], E[:,1])*lamda).T
+    E[:,3] = (E_[:,2]/lamda).T
+    E = E[:]/E[2,3]
+    imgPts = np.matmul(calib,np.matmul(E,reqdPts.T))
+    # print(E)
+    # print(imgPts)
+    # print(np.dot(E,reqdPts.T))
+    # print(reqdPts.T)
+    # exit(-1)
+    return imgPts
+
+
 def find_svd(c1,c2):
-    
     [x1,y1],[x2,y2],[x3,y3],[x4,y4] = c2
     [xp1, yp1], [xp2, yp2], [xp3, yp3], [xp4, yp4] = c1
     A = np.array([[-x1,-y1,-1,0,0,0,x1*xp1,y1*xp1,xp1],[0,0,0,-x1,-y1,-1,x1*yp1,y1*yp1,yp1],[-x2,-y2,-1,0,0,0,x2*xp2,y2*xp2,xp2],\
@@ -39,7 +66,6 @@ def find_svd(c1,c2):
     H = H/H[2,2]
     H = np.linalg.inv(H)
     H = H/H[2,2]
-    H_ = cv2.getPerspectiveTransform(np.asarray(c1).astype(np.float32), c2.astype(np.float32))
     return H
 
 def getPerspectiveTransform(img, H, shape):
@@ -156,7 +182,14 @@ def find_id(img):
             id = (id << 1) | int('00000001', 2)
         else:
             id = (id << 1) | int('00000000', 2)
-    return id               
+    return id
+
+def draw_cubes(img, corners, imgPts):
+    
+    for i, pt in enumerate(corners):        
+        cv2.line(img, tuple(corners[i%4]),tuple(corners[(i+1)%4]),(0,255,255),3)
+        cv2.line(img, tuple(imgPts[0:2, i%4].astype(np.int32)),tuple(imgPts[0:2, (i+1)%4].astype(np.int32)),(0,255,255),3)
+        cv2.line(img, tuple(corners[i%4]),tuple([int(imgPts[0,i%4]),int(imgPts[1,i%4])]),(255,0,0),3)           
 
 def in_hull(p, hull):
     if not isinstance(hull,Delaunay):
