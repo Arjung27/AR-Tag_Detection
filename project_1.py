@@ -23,9 +23,7 @@ def captureVideo(fname):
     cap.release()
     cv2.destroyAllWindows()
     
-def contourDetection(img):
-    im = cv2.imread(img)
-    imgray = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
+def contourDetection(imgray):
     m = np.mean(imgray)+110
     ret, thresh = cv2.threshold(imgray, m, 255, 0)
     _,contours,hierarchy = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
