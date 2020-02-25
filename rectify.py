@@ -22,6 +22,11 @@ def warp_lena(img, img_lena, corners):
 
     return warped_img
 
+def find_cube_pts(img, reqdPts, corners, shape):
+    desired_corners = np.array([[0, 0],[0, shape[1]],[shape[0], shape[1]], [shape[0], 0]])
+    H = find_svd(corners, desired_corners)
+
+
 def find_svd(c1,c2):
     
     [x1,y1],[x2,y2],[x3,y3],[x4,y4] = c2
