@@ -10,7 +10,7 @@ def captureVideo(fname):
         ret, frame = cap.read()
         if ret == False:
             break
-        cv2.imwrite('VideoFrames/vid'+str(i)+'.jpg',frame)
+        cv2.imwrite('VideoFramesC/vid'+str(i)+'.jpg',frame)
         i+=1
     cap.release()
     cv2.destroyAllWindows()
@@ -38,7 +38,10 @@ def getCorners(cntr):
 
 def main():
     
+    fname = 'Video_dataset/multipleTags.mp4'
+    captureVideo(fname)
 
+    '''
     vname = 'VideoFrames/vid150.jpg'
 
     img = cv2.imread(vname)
@@ -56,6 +59,7 @@ def main():
         print((x,y))
     cv2.imshow('coroner',img)
     cv2.waitKey(0)
+    '''
     
 if __name__ == "__main__":
     main()
