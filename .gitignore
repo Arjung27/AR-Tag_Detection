@@ -574,3 +574,20 @@ SVD.py
 /project_contour.pyc
 /reference_images/output_Tag0.mp4
 /reference_images/rectified_output_Tag0.mp4
+/OutputVideo/Multiple tags/CubeProjection_multipleTags.mp4
+/OutputVideo/Multiple tags/Lena_multipleTags_backup.mp4
+/OutputVideo/Multiple tags/output_multipleTags.mp4
+/OutputVideo/Tag0/Tag0_Lena.mp4
+/OutputVideo/Tag0/Tag0_cube.mp4
+/OutputVideo/Tag0/Tag0_output.mp4
+/OutputVideo/Tag1/Tag1_Lena.mp4
+/OutputVideo/Tag1/Tag1_cube.mp4
+/OutputVideo/Tag1/Tag1_output.mp4
+/OutputVideo/Tag2/Lena_Tag2.mp4
+/OutputVideo/Tag2/Tag2_cube.mp4
+/OutputVideo/Tag2/Tag2_output.mp4
+/Video_dataset/CubeProjection_Tag0.mp4
+/Video_dataset/CubeProjection_multipleTags.mp4
+/Video_dataset/Lena_Tag2.mp4
+/Video_dataset/Lena_multipleTags.mp4
+/Video_dataset/output_multipleTags.mp4
