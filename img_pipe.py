@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from copy import deepcopy
 from rectify import *
 import glob
-from P1 import *
+from project_contour import *
 
 if __name__=="__main__":
 
@@ -13,10 +13,10 @@ if __name__=="__main__":
     count = 0
     for file in lines:
         img = cv2.imread(file,cv2.IMREAD_GRAYSCALE)
-        ctr = contourDetection(img)
-        crnr = getCorners(ctr)
-        crnr = np.array(crnr[1])
-        crnr = np.squeeze(crnr, 1)
+        ctr, hierarchy = contourDetection(img)
+        crnr = getCornersReloaded(ctr, hierarchy)
+        crnr = np.asarray(crnr)
+        crnr = np.reshape(crnr,(4,2))
         if crnr.shape[0] < 4:
             continue
         rect_img = rectify(img,crnr[0:4])

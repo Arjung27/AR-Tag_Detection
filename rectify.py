@@ -142,18 +142,13 @@ def orient_img(img):
     topRight = [xmin, ymax]
     bottomLeft = [xmax, ymin]
     bottomRight = [xmax, ymax]
-    keypts = np.array([np.add(topLeft,0.125*np.add(bottomRight,np.multiply(-1,topLeft))),np.add(topRight,0.125*np.add(bottomLeft,np.multiply(-1,topRight))),
-                     np.add(bottomLeft, 0.125*np.add(topRight, np.multiply(-1,bottomLeft))), np.add(bottomRight, 0.125*np.add(topLeft, np.multiply(-1,bottomRight)))])
-    if (img[topLeft[0]+8, topLeft[1]+8] >= 252):
-        num_rot = 2
-        img = cv2.rotate(img, cv2.ROTATE_90_COUNTERCLOCKWISE)
-        img = cv2.rotate(img, cv2.ROTATE_90_COUNTERCLOCKWISE)
-    elif (img[topRight[0]+8, topRight[1]-8] >= 252):
-        num_rot = 3
-        img = cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE)
-    elif (img[bottomLeft[0]-8, bottomLeft[1]+8] >= 252):
-        num_rot = 1
-        img = cv2.rotate(img, cv2.ROTATE_90_COUNTERCLOCKWISE)
+    keypts = np.array([np.add(bottomRight, 0.1*np.add(topLeft, np.multiply(-1,bottomRight))), np.add(topRight,0.1*np.add(bottomLeft,np.multiply(-1,topRight))) ,
+                    np.add(topLeft,0.1*np.add(bottomRight,np.multiply(-1,topLeft))),np.add(bottomLeft, 0.1*np.add(topRight, np.multiply(-1,bottomLeft))) ])
+    for i in range(len(keypts)):
+        if img[int(keypts[i,0])][int(keypts[i,1])] >=230 :
+            for k in range(i):
+                img = cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE)
+            num_rot = i    
 
     return num_rot, img  
     
@@ -173,12 +168,12 @@ def find_id(img):
     topRight = [xmin, ymax]
     bottomLeft = [xmax, ymin]
     bottomRight = [xmax, ymax]
-    keypts = np.array([np.add(topLeft,0.45*np.add(bottomRight,np.multiply(-1,topLeft))),np.add(topRight,0.45*np.add(bottomLeft,np.multiply(-1,topRight))),
-                     np.add(bottomLeft, 0.45*np.add(topRight, np.multiply(-1,bottomLeft))), np.add(bottomRight, 0.45*np.add(topLeft, np.multiply(-1,bottomRight)))])
+    keypts = np.array([np.add(bottomLeft, 0.375*np.add(topRight, np.multiply(-1,bottomLeft))),np.add(bottomRight, 0.375*np.add(topLeft, np.multiply(-1,bottomRight))), 
+                        np.add(topRight,0.375*np.add(bottomLeft,np.multiply(-1,topRight))),np.add(topLeft,0.375*np.add(bottomRight,np.multiply(-1,topLeft)))])
     id = 0
     cv2.rectangle(img,(ymin,xmin),(ymax,xmax),(0,255,0),thickness=1)
     for i in range(len(keypts)):
-        if(img[int(keypts[i][0])][int(keypts[i][1])] > 230):
+        if(img[int(keypts[i][0])][int(keypts[i][1])] >245):
             id = (id << 1) | int('00000001', 2)
         else:
             id = (id << 1) | int('00000000', 2)
@@ -186,7 +181,7 @@ def find_id(img):
 
 def draw_cubes(img, corners, imgPts):
     
-    for i, pt in enumerate(corners):        
+    for i in range(corners.shape[0]):        
         cv2.line(img, tuple(corners[i%4]),tuple(corners[(i+1)%4]),(0,255,255),3)
         cv2.line(img, tuple(imgPts[0:2, i%4].astype(np.int32)),tuple(imgPts[0:2, (i+1)%4].astype(np.int32)),(0,255,255),3)
         cv2.line(img, tuple(corners[i%4]),tuple([int(imgPts[0,i%4]),int(imgPts[1,i%4])]),(255,0,0),3)           

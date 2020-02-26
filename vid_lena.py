@@ -8,11 +8,11 @@ from project_contour import *
 
 if __name__=="__main__":
     path = "/home/vishnuu/UMD/ENPM673/Perception_Projects/Project1/AR-Tag-Detection-and-Tracking/Video_dataset/"
-    filename = "Tag2.mp4" # Tag1.mp4, Tag2.mp4, Tag3.mp4    
+    filename = "Tag0.mp4" # Tag1.mp4, Tag2.mp4, Tag3.mp4    
     cap = cv2.VideoCapture(path+filename)
-    vidWriter = cv2.VideoWriter(path+"CubeProjection_"+filename, cv2.VideoWriter_fourcc(*'mp4v'), 24, (1920,1080))
+    vidWriter = cv2.VideoWriter(path+"Lena_"+filename, cv2.VideoWriter_fourcc(*'mp4v'), 24, (1920,1080))
     i = 0
-    print("Running...")
+    print("Running... ")
     while(cap.isOpened()):
         print(i)
         i+=1
@@ -34,25 +34,16 @@ if __name__=="__main__":
             tagCrnrs[int(j/4),:,:,:] = crnr[j:(j+4)]
         tagCrnrs = np.squeeze(tagCrnrs, axis = 2)
         tagCrnrs = tagCrnrs.astype(np.int32)
-        for j in range(0,tagCrnrs.shape[0]): 
+        for j in range(0,tagCrnrs.shape[0]):
             rect_img = rectify(img_gray,tagCrnrs[j])
             num_rot, rect_img = orient_img(rect_img)
-            refArtag = cv2.imread("./reference_images/ref_marker.png")
-            refImgShape = [512, 512]
-            cubeHeight = 512
-            calib = np.array( [ [1406.08415449821, 0, 0], [2.20679787308599, 1417.99930662800,  0], [1014.13643417416, 566.347754321696,  1] ])
-            calib = np.transpose(calib)
-            reqdPts = np.array([[0, 0, -cubeHeight, 1], [0, refImgShape[1], -cubeHeight, 1],
-                                [refImgShape[0], refImgShape[1], -cubeHeight, 1], [refImgShape[0], 0  , -cubeHeight, 1]])
-            imgPts = find_cube_pts(img, reqdPts, tagCrnrs[j], refImgShape, calib)
-            imgPts = imgPts[:]/imgPts[2,:]
-            for c in imgPts.T:
-                x, y, _ = c.ravel()
-                cv2.circle(img,(int(x), int(y)),10,(0,255,0)) 
-            draw_cubes(img, tagCrnrs[j], imgPts)
+            tagCorner = (int(tagCrnrs[j,0,0]), int(tagCrnrs[j,0,1]))
+            lenaImg = cv2.imread("/home/vishnuu/UMD/ENPM673/Perception_Projects/Project1/AR-Tag-Detection-and-Tracking/reference_images/Lena.png")
+            for j in range(num_rot):
+                lenaImg = cv2.rotate(lenaImg, cv2.ROTATE_90_COUNTERCLOCKWISE)
+            raw_lena_img = cv2.resize(lenaImg, (256,256))  
+            img = warp_lena(img,raw_lena_img,tagCrnrs[j])
         vidWriter.write(img)
-print("Ended...")
+print("Ended....")        
 cap.release()
 vidWriter.release()
-
-        # to check if det(R) = 1
