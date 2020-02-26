@@ -13,5 +13,5 @@ while(cap.isOpened()):
     print (i)
  
 cap.release()
-cv2.ReleaseVideoWriter(vid_create)
+vid_create.release()
 cv2.destroyAllWindows()
