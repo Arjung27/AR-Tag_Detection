@@ -32,8 +32,8 @@ def getCorners(cntr):
     for cnt in cntr:
         cnt = cv2.approxPolyDP(cnt,0.01*cv2.arcLength(cnt,True),True)
         hull = cv2.convexHull(cnt)
-	if cv2.contourArea(hull)>800:
-        	hullist.append(hull)
+    if cv2.contourArea(hull)>800:
+        hullist.append(hull)
     return hullist
 
 def main():
