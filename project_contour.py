@@ -18,7 +18,7 @@ def getCornersReloaded(_contour,_heirarchy):
     for i,h in enumerate(_heirarchy):
     	if h[2] != -1 and h[3] != -1:
     		contr.append((i))
-    print(contr)
+    #print(contr)
 
     cour = np.asarray(_contour)
     arr = []
@@ -29,6 +29,9 @@ def getCornersReloaded(_contour,_heirarchy):
         arr.append((i,cv2.contourArea(cont)))
         #print(cv2.contourArea(cont))
     arr = np.asarray(arr)
+    print(arr)
+    if len(arr)==0:
+        return None
     
     arr = arr[arr[:,1].argsort()[::-1]]
     
@@ -38,7 +41,7 @@ def getCornersReloaded(_contour,_heirarchy):
     for i in arr_ind:
         connor.append((i))
     connor = np.asarray(connor)
-    print(len(connor))
+    #print(len(connor))
     if len(connor)>2:
         rng = 3
     else:
@@ -57,6 +60,7 @@ def getCornersReloaded(_contour,_heirarchy):
         
             
         thull = np.reshape(hull,(hull.shape[0],hull.shape[2]))
+        print(thull)
         ymin= np.where(thull[:,1]==np.amin(thull[:,1]))
         ymax= np.where(thull[:,1]==np.amax(thull[:,1]))
         ymin = ymin[0][0]
@@ -81,7 +85,7 @@ def getCornersReloaded(_contour,_heirarchy):
 
 def main():
 
-    vname = 'VideoFramesC/vid200.jpg'
+    vname = 'VideoFrames3/vid572.jpg'
     img = cv2.imread(vname)
     ctr,heir = contourDetection(vname)
 
