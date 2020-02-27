@@ -21,4 +21,6 @@ vid_pipe.py (For identifying ID of the tag(s))
 
 * Modify the filename variable with the name of the tag file. For example: Tag0.mp4
 * From the command line use command python3 <code_filename>.py .
+* In the above instruction code_filename can take: cube_proj, vid_lena, vid_pipe
+* The output files can be found in the source (parent) folder.
 
