@@ -5,7 +5,6 @@ import matplotlib.pyplot as plt
 
 def rectify(img_gray, corners):
 
-
     desired_corners = np.array([[0,0],[128, 0], [128, 128] ,[0, 128]], dtype=np.float32)
     H = find_svd(corners, desired_corners)
     shape = [128, 128]
@@ -14,17 +13,17 @@ def rectify(img_gray, corners):
     return rect_img
 
 def warp_lena(img, img_lena, corners):
+
     desired_corners = np.array([[0,0],[img_lena.shape[0], 0], [img_lena.shape[0], img_lena.shape[0]] ,[0, img_lena.shape[0]]], dtype=np.float32)
-    #print(corners)
     H = find_svd(corners, desired_corners)
     shape = [img_lena.shape[0],img_lena.shape[0]]
     warped_img = getPerspectiveTransform_Lena(img,img_lena, H, shape)
     return warped_img
 
 def find_cube_pts(img, reqdPts, corners, shape, calib):
+
     desired_corners = np.array([[0, 0],[0, shape[1]],[shape[0], shape[1]], [shape[0], 0]])
     H = find_svd(corners, desired_corners)
-    # print(H)
     H = np.linalg.inv(H)
     H = H/H[2,2]
     E = np.zeros([3, 4])
@@ -32,9 +31,10 @@ def find_cube_pts(img, reqdPts, corners, shape, calib):
     E_ = np.matmul(calib_inv, H)
     lamda = (np.linalg.norm(np.matmul(calib_inv, H[:, 0])) + np.linalg.norm(np.matmul(calib_inv, H[:, 1])))/2
     B = np.linalg.det(E_)
+    
     if B < 0:
         E_ = -E_
-        
+
     E_ = E_/lamda
     E[:,0] = (E_[:,0]/lamda).T
     E[:,1] = (E_[:,1]/lamda).T
@@ -42,15 +42,12 @@ def find_cube_pts(img, reqdPts, corners, shape, calib):
     E[:,3] = (E_[:,2]/lamda).T
     E = E[:]/E[2,3]
     imgPts = np.matmul(calib,np.matmul(E,reqdPts.T))
-    # print(E)
-    # print(imgPts)
-    # print(np.dot(E,reqdPts.T))
-    # print(reqdPts.T)
-    # exit(-1)
+    
     return imgPts
 
 
 def find_svd(c1,c2):
+
     [x1,y1],[x2,y2],[x3,y3],[x4,y4] = c2
     [xp1, yp1], [xp2, yp2], [xp3, yp3], [xp4, yp4] = c1
     A = np.array([[-x1,-y1,-1,0,0,0,x1*xp1,y1*xp1,xp1],[0,0,0,-x1,-y1,-1,x1*yp1,y1*yp1,yp1],[-x2,-y2,-1,0,0,0,x2*xp2,y2*xp2,xp2],\
@@ -59,33 +56,40 @@ def find_svd(c1,c2):
                     
     A_trans = A.transpose()
     A_prod = np.dot(A_trans,A)
-    # print(type(a))
     w,v = np.linalg.eig(A_prod)
     H = v[:,-1]
     H = np.reshape(H,(3,3))
     H = H/H[2,2]
+    if abs(np.linalg.det(H)) < 0.0001:
+        return H 
     H = np.linalg.inv(H)
     H = H/H[2,2]
     return H
 
 def getPerspectiveTransform(img, H, shape):
+
     Hinv = np.linalg.inv(H)
     Hinv = Hinv/Hinv[2,2]
     rect_img = np.zeros((shape[0], shape[1], 1))
     img_ = img.astype(np.float32)
-
+    counter=0
     for i in range(shape[0]): # x? to change
         for j in range(shape[1]): #y?
             [x, y, z] = np.dot(Hinv, np.transpose([j, i, 1]))
             x = x/z
-            y = y/z       
-            if (x < 1920 and y < 1080 and x >= 0 and y >= 0):
+            y = y/z
+            counter+=1
+            if (type(x) != np.float64) or (type(y)!= np.float64):
+                # print(1)
+                continue
+            if (x < 1919 and y < 1079 and x >= 0 and y >= 0):
                 rect_img[i,j] = (img_[int(np.floor(y)),int(np.floor(x))] + img_[int(np.floor(y)),int(np.ceil(x))]
                                     + img_[int(np.ceil(y)), int(np.ceil(x))]+ img_[int(np.ceil(y)) , int(np.floor(x))])/4.0
             
     return rect_img
 
 def getPerspectiveTransform_Lena(img, img_lena, H, shape):
+
     Hinv = np.linalg.inv(H)
     Hinv = Hinv/Hinv[2,2]
     img_ = np.zeros((img.shape[0], img.shape[1], 4))
@@ -103,32 +107,11 @@ def getPerspectiveTransform_Lena(img, img_lena, H, shape):
                 img_[int(np.floor(y)), int(np.floor(x)), 0:3] = (img_[int(np.floor(y)), int(np.floor(x)), 0:3]*img_[int(np.floor(y)), int(np.floor(x)), 3] 
                                                                     + img_lena[i,j,0:3])/(img_[int(np.floor(y)), int(np.floor(x)), 3] + 1)
                 img_[int(np.floor(y)), int(np.floor(x)), 3] += 1
-                # #print(img_[int(np.floor(y)), int(np.floor(x)), 0:3]) 
-
-                # img_[int(np.floor(y)), int(np.ceil(x)), 0:3] = (img_[int(np.floor(y)), int(np.ceil(x)), 0:3]*img_[int(np.floor(y)), int(np.ceil(x)), 3] 
-                #                                                     + img_lena[i,j,0:3])/(img_[int(np.floor(y)), int(np.ceil(x)), 3] + 1)
-                # img_[int(np.floor(y)), int(np.ceil(x)), 3] += 1
-                # #print(img_[int(np.floor(y)), int(np.ceil(x)), 0:3])
-
-                # img_[int(np.ceil(y)), int(np.ceil(x)), 0:3] = (img_[int(np.ceil(y)), int(np.ceil(x)), 0:3]*img_[int(np.ceil(y)), int(np.ceil(x)), 3] 
-                #                                                     + img_lena[i,j,0:3])/(img_[int(np.ceil(y)), int(np.ceil(x)), 3] + 1)
-                # img_[int(np.ceil(y)), int(np.ceil(x)), 3] += 1 
-                # #print(img_[int(np.ceil(y)), int(np.ceil(x)), 0:3])
-
-                # img_[int(np.ceil(y)), int(np.floor(x)), 0:3] = (img_[int(np.ceil(y)), int(np.floor(x)), 0:3]*img_[int(np.ceil(y)), int(np.floor(x)), 3] 
-                #                                                     + img_lena[i,j,0:3])/(img_[int(np.ceil(y)), int(np.floor(x)), 3] + 1)
-                # img_[int(np.ceil(y)), int(np.floor(x)), 3] += 1
-                #print(img_[int(np.ceil(y)), int(np.floor(x)), 0:3])
-                # img_[index_x, index_y, 0:3] = (img_[index_x, index_y, 0:3]*img_[index_x, index_y,3] + img_lena[i,j,0:3])/(img_[index_x, index_y,3] + 1)
-                # img_[index_x, index_y, 3] += 1
-
-    
-    # inds = np.where(img_[:,:,3]==0)
-    # img_[inds[0], inds[1], 3] = 1
-    #img_ = img_[:,:,0:3]/img_[:,:,3, np.newaxis] 
+                
     return img_[:,:,0:3].astype(np.uint8)                                                                              
         
 def orient_img(img):
+
     scale = 5
     scaleEnd = -3
     num_rot = 0
@@ -154,6 +137,7 @@ def orient_img(img):
     
 
 def find_id(img):
+
     sizex = img.shape[0]
     sizey = img.shape[1]
     scale = 5
@@ -187,6 +171,7 @@ def draw_cubes(img, corners, imgPts):
         cv2.line(img, tuple(corners[i%4]),tuple([int(imgPts[0,i%4]),int(imgPts[1,i%4])]),(255,0,0),3)           
 
 def in_hull(p, hull):
+
     if not isinstance(hull,Delaunay):
         hull = Delaunay(hull)
     res = hull.find_simplex(p)>=0
@@ -194,6 +179,7 @@ def in_hull(p, hull):
     return res
     
 if __name__=="__main__":
+    
     index = [44, 250, 399]
     corners = [
                 np.array([[1145, 567], [1074, 598], [1033, 537], [1104, 508]], dtype=np.float32),

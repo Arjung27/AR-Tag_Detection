@@ -9,14 +9,16 @@ np.random.seed(0)
 
 if __name__=="__main__":
     path = "/home/vishnuu/UMD/ENPM673/Perception_Projects/Project1/AR-Tag-Detection-and-Tracking/Video_dataset/"
-    filename = "Tag2.mp4" # Tag1.mp4, Tag2.mp4, Tag3.mp4    
+    filename = "multipleTags.mp4" # Tag1.mp4, Tag2.mp4, Tag3.mp4    
     cap = cv2.VideoCapture(path+filename)
     vidWriter = cv2.VideoWriter(path+"output_"+filename, cv2.VideoWriter_fourcc(*'mp4v'), 24, (1920,1080))
     i = 0
     print("Running....")
     while(cap.isOpened()):
-        print(i)
+        # print(i)
         i+=1
+        # if i>20:
+        #     break
         ret, img = cap.read()
         if ret == False:
             break
@@ -24,22 +26,14 @@ if __name__=="__main__":
         ctr, heirarchy = contourDetection(img_gray)
         crnr = getCornersReloaded(ctr, heirarchy)
         crnr = np.asarray(crnr)
-        # print (crnr.shape)``
         if (crnr.shape == ()):  
             continue
-        num_tags = int(crnr.shape[0]/4)
-        crnr = crnr[0:num_tags*4]
-        tagCrnrs = np.zeros([num_tags,4,1,2])
-        if crnr.shape[0]%4 != 0:
-            continue
-        for j in range(0,len(crnr), 4):
-            tagCrnrs[int(j/4),:,:,:] = crnr[j:(j+4)]
-        tagCrnrs = np.squeeze(tagCrnrs, axis = 2)
-        tagCrnrs = tagCrnrs.astype(np.int32)
-        for j in range(0,tagCrnrs.shape[0]):
-            rect_img = rectify(img_gray,tagCrnrs[j])
+        crnr = np.squeeze(crnr, axis = 2)
+        crnr = crnr.astype(np.int32)
+        for j in range(0,crnr.shape[0]):
+            rect_img = rectify(img_gray,crnr[j])
             num_rot, rect_img = orient_img(rect_img)
-            tagCorner = (int(tagCrnrs[j,0,0]), int(tagCrnrs[j,0,1]))
+            tagCorner = (int(crnr[j,0,0]), int(crnr[j,0,1]))
             id = find_id(rect_img)
             rect_img = rect_img.astype(np.uint8)
             # cv2.imshow("rect", rect_img)

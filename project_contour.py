@@ -2,9 +2,7 @@ import numpy as np
 import cv2
 import matplotlib.pyplot as plt
 
-def contourDetection(img):
-    im = cv2.imread(img)
-    imgray = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
+def contourDetection(imgray):
     imgray = cv2.GaussianBlur(imgray,(3,3),cv2.BORDER_DEFAULT)
     m = np.mean(imgray)+110
     ret, thresh = cv2.threshold(imgray, m, 255, 0)
@@ -29,7 +27,7 @@ def getCornersReloaded(_contour,_heirarchy):
         arr.append((i,cv2.contourArea(cont)))
         #print(cv2.contourArea(cont))
     arr = np.asarray(arr)
-    print(arr)
+    # print(arr)
     if len(arr)==0:
         return None
     
@@ -41,7 +39,7 @@ def getCornersReloaded(_contour,_heirarchy):
     for i in arr_ind:
         connor.append((i))
     connor = np.asarray(connor)
-    #print(len(connor))
+    # print(len(connor))
     if len(connor)>2:
         rng = 3
     else:
@@ -60,7 +58,7 @@ def getCornersReloaded(_contour,_heirarchy):
         
             
         thull = np.reshape(hull,(hull.shape[0],hull.shape[2]))
-        print(thull)
+        # print(thull)
         ymin= np.where(thull[:,1]==np.amin(thull[:,1]))
         ymax= np.where(thull[:,1]==np.amax(thull[:,1]))
         ymin = ymin[0][0]
