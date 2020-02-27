@@ -5,7 +5,6 @@ from copy import deepcopy
 from rectify import *
 import glob
 from project_contour import *
-np.random.seed(0)
 
 if __name__=="__main__":
     path = "/home/vishnuu/UMD/ENPM673/Perception_Projects/Project1/AR-Tag-Detection-and-Tracking/Video_dataset/"
